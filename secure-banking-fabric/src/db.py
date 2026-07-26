@@ -1,9 +1,27 @@
 import asyncio
 import logging
+import sys
+import subprocess
 from src.generated.bank_client import Prisma
 
 logger = logging.getLogger("db_client")
 _bank_db: Prisma | None = None
+
+def _ensure_query_engine():
+    """Auto-fetch Prisma query engine binary if missing in production runtime container."""
+    try:
+        logger.info("Auto-fetching missing Prisma query engine binary...")
+        res = subprocess.run(
+            [sys.executable, "-m", "prisma", "py", "fetch"],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        logger.info(f"Prisma fetch output: {res.stdout}")
+        if res.stderr:
+            logger.warning(f"Prisma fetch stderr: {res.stderr}")
+    except Exception as e:
+        logger.error(f"Failed auto-fetching Prisma query engine: {e}")
 
 async def get_bank_db() -> Prisma | None:
     global _bank_db
@@ -24,8 +42,11 @@ async def get_bank_db() -> Prisma | None:
             logger.info("Successfully connected to Bank Database")
             return _bank_db
         except Exception as e:
-            logger.warning(f"Database connection attempt {attempt + 1}/3 failed: {e}")
-            await asyncio.sleep(1.0)
+            err_msg = str(e)
+            logger.warning(f"Database connection attempt {attempt + 1}/3 failed: {err_msg}")
+            if "query-engine" in err_msg or "prisma py fetch" in err_msg:
+                _ensure_query_engine()
+            await asyncio.sleep(2.0)
 
     _bank_db = None
     return None
