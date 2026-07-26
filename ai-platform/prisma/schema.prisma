@@ -1,0 +1,45 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("AI_PLATFORM_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-py"
+  output   = "../src/generated/ai_client"
+}
+
+model User {
+  id             String         @id @default(cuid())
+  bankCustomerId String         // string reference to bank customer ID - NO FK
+  email          String         @unique
+  name           String
+  createdAt      DateTime       @default(now())
+  conversations  Conversation[]
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  title     String?
+  createdAt DateTime  @default(now())
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  role           String       // user | assistant | agent
+  content        String
+  traceInfo      String?      // optional execution step trace
+  createdAt      DateTime     @default(now())
+}
+
+model AgentMemory {
+  id             String    @id @default(cuid())
+  conversationId String
+  key            String
+  value          String    // JSON stringified value
+  expiresAt      DateTime?
+}

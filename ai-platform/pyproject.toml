@@ -1,0 +1,29 @@
+[project]
+name = "ai-platform"
+version = "0.1.0"
+description = "AI Platform - Microservice providing reasoning, multi-agent orchestration & Gemini Key Pool"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.28.0",
+    "pydantic>=2.6.0",
+    "redis>=5.0.0",
+    "httpx>=0.27.0",
+    "inngest>=0.4.0",
+    "pyjwt>=2.8.0",
+    "google-generativeai>=0.4.0",
+    "langchain>=0.1.0",
+    "langgraph>=0.0.30",
+    "python-dotenv>=1.0.0",
+    "prisma>=0.15.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# Treat `src/` as the Python package named `src`, not as a layout root.
+# This ensures `from src.config import X` resolves from the project root.
+packages = ["src"]

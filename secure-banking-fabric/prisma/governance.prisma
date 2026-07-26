@@ -1,0 +1,56 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("GOVERNANCE_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-py"
+  output   = "../src/generated/governance_client"
+}
+
+model AgentPolicy {
+  id                String   @id @default(cuid())
+  agentType         String   // e.g. "payment-agent"
+  version           Int      @default(1)
+  allowedOperations String   // JSON stringified array of ops
+  resourceScopes    String   // JSON stringified resource scope config
+  limits            String   // JSON stringified caps: perTransactionCap, dailyCap
+  conditions        String   // JSON stringified conditions: requireOtpAbove, allowedHours
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+}
+
+model AgentRegistry {
+  id         String    @id @default(cuid())
+  instanceId String    @unique // e.g. "pay-001"
+  agentType  String
+  status     String    @default("ACTIVE") // ACTIVE | REVOKED | EXPIRED
+  spawnedAt  DateTime  @default(now())
+  revokedAt  DateTime?
+  revokedBy  String?
+}
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  requestId     String   @unique
+  traceId       String
+  agentInstance String
+  operation     String
+  decision      String   // ALLOW | DENY
+  reasonCode    String?
+  policyVersion Int
+  latencyMs     Int
+  payload       String   // JSON stringified request payload
+  createdAt     DateTime @default(now())
+}
+
+model OtpChallenge {
+  id         String   @id @default(cuid())
+  requestId  String
+  customerId String
+  otpHash    String
+  status     String   @default("PENDING") // PENDING | VERIFIED | EXPIRED | FAILED
+  attempts   Int      @default(0)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+}

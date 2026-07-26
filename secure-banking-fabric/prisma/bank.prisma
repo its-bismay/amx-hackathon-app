@@ -1,0 +1,93 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("BANK_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-py"
+  output   = "../src/generated/bank_client"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  customerId   String   @unique
+  customer     Customer @relation(fields: [customerId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+model Customer {
+  id            String        @id @default(cuid())
+  name          String
+  email         String        @unique
+  phone         String
+  createdAt     DateTime      @default(now())
+  user          User?
+  accounts      Account[]
+  beneficiaries Beneficiary[]
+  cards         Card[]
+}
+
+model Account {
+  id           String        @id @default(cuid())
+  customerId   String
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  type         String        // salary | savings | escrow | loan
+  accountNo    String        @unique
+  balance      Float         @default(0.0)
+  currency     String        @default("INR")
+  status       String        @default("ACTIVE") // ACTIVE | FROZEN | CLOSED
+  transactions Transaction[]
+  cards        Card[]
+}
+
+model Beneficiary {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  name       String
+  accountNo  String
+  ifsc       String
+  nickname   String?  // e.g. "Rahul" -> resolved by ResourceResolverAgent
+}
+
+model Transaction {
+  id           String   @id @default(cuid())
+  accountId    String
+  account      Account  @relation(fields: [accountId], references: [id])
+  type         String   // DEBIT | CREDIT
+  amount       Float
+  counterparty String?
+  requestId    String   // ties back to agent request ID
+  status       String   @default("PENDING") // PENDING | COMPLETED | FAILED | REVERSED
+  reversalOfId String?
+  reversedById String?
+  reason       String?
+  createdAt    DateTime @default(now())
+}
+
+model Ledger {
+  id            String   @id @default(cuid())
+  transactionId String
+  entryType     String   // DEBIT | CREDIT
+  amount        Float
+  balanceAfter  Float
+  createdAt     DateTime @default(now())
+}
+
+model Card {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  accountId   String
+  account     Account  @relation(fields: [accountId], references: [id])
+  last4       String
+  network     String   // VISA | MASTERCARD | RUPAY
+  expiryMonth Int
+  expiryYear  Int
+  cvvHash     String
+  token       String   @unique
+  status      String   @default("ACTIVE") // ACTIVE | BLOCKED | EXPIRED
+  createdAt   DateTime @default(now())
+}
