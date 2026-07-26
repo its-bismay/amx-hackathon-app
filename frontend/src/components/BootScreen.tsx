@@ -42,7 +42,9 @@ export const BootScreen: React.FC<BootScreenProps> = ({ onReady }) => {
       const updated = await Promise.all(
         services.map(async (svc) => {
           try {
-            const res = await fetch(`${svc.url}${svc.healthPath}`, { signal: AbortSignal.timeout(5000) });
+            const res = await fetch(`${svc.url}${svc.healthPath}`, {
+              signal: AbortSignal.timeout(30000), // 30s — Render free cold-start can take 30-60s
+            });
             return { ...svc, status: (res.ok ? "online" : "error") as ServiceStatus };
           } catch {
             return { ...svc, status: "waiting" as ServiceStatus };
@@ -56,7 +58,7 @@ export const BootScreen: React.FC<BootScreenProps> = ({ onReady }) => {
     };
 
     probe(); // immediate first probe
-    const interval = setInterval(probe, 4000);
+    const interval = setInterval(probe, 35000); // retry every 35s (after 30s timeout completes)
     return () => clearInterval(interval);
   }, []); // eslint-disable-line
 
