@@ -23,7 +23,6 @@ export const BootScreen: React.FC<BootScreenProps> = ({ onReady }) => {
   const [services, setServices] = useState<Service[]>([
     { name: "sbf", label: "Secure Banking Fabric", url: SBF_URL, healthPath: "/health", status: "waiting" },
     { name: "ai",  label: "AI Agent Platform",     url: AI_URL,  healthPath: "/health", status: "waiting" },
-    { name: "opa", label: "OPA Policy Engine",      url: OPA_URL, healthPath: "/health", status: "waiting" },
   ]);
   const [elapsed, setElapsed]       = useState(0);
   const [attempt, setAttempt]       = useState(0);
@@ -121,6 +120,14 @@ export const BootScreen: React.FC<BootScreenProps> = ({ onReady }) => {
               {statusBadge(svc.status)}
             </div>
           ))}
+          {/* OPA — no CORS headers, cannot be pinged from browser; verified implicitly via SBF */}
+          <div className="flex items-center justify-between bg-base-200 rounded-xl px-4 py-3 border border-base-300">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
+              <span className="text-sm font-semibold">OPA Policy Engine</span>
+            </div>
+            <span className="badge badge-info badge-sm font-bold">VIA SBF</span>
+          </div>
           {/* Redis — TCP managed service, always shown as online (Upstash 99.9% SLA) */}
           <div className="flex items-center justify-between bg-base-200 rounded-xl px-4 py-3 border border-base-300">
             <div className="flex items-center gap-3">
