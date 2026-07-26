@@ -1,4 +1,4 @@
-const SBF_BASE_URL = "http://localhost:8001";
+const SBF_BASE_URL = import.meta.env.VITE_SBF_URL ?? "http://localhost:8001";
 
 export async function fetchDemoAccounts() {
   const resp = await fetch(`${SBF_BASE_URL}/api/v1/bank/demo-accounts`);

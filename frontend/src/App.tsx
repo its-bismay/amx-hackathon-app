@@ -1,10 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { LoginPage } from "./pages/LoginPage";
 import { Dashboard } from "./pages/Dashboard";
+import { BootScreen } from "./components/BootScreen";
+
+// Only show BootScreen in production (i.e. not localhost)
+const IS_PRODUCTION = !window.location.hostname.includes("localhost");
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
+  const [booted, setBooted] = useState(!IS_PRODUCTION ? true : false);
+
+  // Show warm-up screen only in production until both Render services are online
+  if (!booted) {
+    return <BootScreen onReady={() => setBooted(true)} />;
+  }
 
   if (loading) {
     return (

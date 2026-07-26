@@ -1,4 +1,4 @@
-const SBF_BASE_URL = "http://localhost:8001";
+const SBF_BASE_URL = import.meta.env.VITE_SBF_URL ?? "http://localhost:8001";
 
 function getAuthHeader(token?: string): Record<string, string> {
   const authToken = token || localStorage.getItem("aegis_token") || "";

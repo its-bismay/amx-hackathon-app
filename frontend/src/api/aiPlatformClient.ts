@@ -1,4 +1,4 @@
-const AI_PLATFORM_BASE_URL = "http://localhost:8000";
+const AI_PLATFORM_BASE_URL = import.meta.env.VITE_AI_PLATFORM_URL ?? "http://localhost:8000";
 
 export async function sendChatMessage(message: string, userId: string = "usr_demo101", customerId: string = "cust_101") {
   const resp = await fetch(`${AI_PLATFORM_BASE_URL}/api/chat/message`, {

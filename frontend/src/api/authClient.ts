@@ -1,4 +1,4 @@
-const SBF_BASE_URL = "http://localhost:8001";
+const SBF_BASE_URL = import.meta.env.VITE_SBF_URL ?? "http://localhost:8001";
 
 export async function registerUser(name: string, email: string, phone: string, password: string) {
   const resp = await fetch(`${SBF_BASE_URL}/api/v1/auth/register`, {
