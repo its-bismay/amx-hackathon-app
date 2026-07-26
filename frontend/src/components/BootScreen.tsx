@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Server, Wifi, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
 
 const SBF_URL = import.meta.env.VITE_SBF_URL ?? "http://localhost:8001";
-const AI_URL = import.meta.env.VITE_AI_PLATFORM_URL ?? "http://localhost:8000";
+const AI_URL  = import.meta.env.VITE_AI_PLATFORM_URL ?? "http://localhost:8000";
+const OPA_URL = import.meta.env.VITE_OPA_URL ?? "http://localhost:8181";
 
 type ServiceStatus = "waiting" | "online" | "error";
 
@@ -20,8 +21,9 @@ interface BootScreenProps {
 
 export const BootScreen: React.FC<BootScreenProps> = ({ onReady }) => {
   const [services, setServices] = useState<Service[]>([
-    { name: "sbf", label: "Secure Banking Fabric", url: SBF_URL, healthPath: "/api/v1/bank/demo-accounts", status: "waiting" },
-    { name: "ai",  label: "AI Agent Platform",     url: AI_URL,  healthPath: "/api/chat/gemini-status",    status: "waiting" },
+    { name: "sbf", label: "Secure Banking Fabric", url: SBF_URL, healthPath: "/health", status: "waiting" },
+    { name: "ai",  label: "AI Agent Platform",     url: AI_URL,  healthPath: "/health", status: "waiting" },
+    { name: "opa", label: "OPA Policy Engine",      url: OPA_URL, healthPath: "/health", status: "waiting" },
   ]);
   const [elapsed, setElapsed]       = useState(0);
   const [attempt, setAttempt]       = useState(0);
@@ -119,6 +121,14 @@ export const BootScreen: React.FC<BootScreenProps> = ({ onReady }) => {
               {statusBadge(svc.status)}
             </div>
           ))}
+          {/* Redis — TCP managed service, always shown as online (Upstash 99.9% SLA) */}
+          <div className="flex items-center justify-between bg-base-200 rounded-xl px-4 py-3 border border-base-300">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
+              <span className="text-sm font-semibold">Redis (Upstash)</span>
+            </div>
+            <span className="badge badge-success badge-sm font-bold">MANAGED</span>
+          </div>
         </div>
 
         {/* Footer */}

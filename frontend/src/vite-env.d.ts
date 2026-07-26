@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly VITE_SBF_URL: string;
   readonly VITE_AI_PLATFORM_URL: string;
+  readonly VITE_OPA_URL: string;
 }
 
 interface ImportMeta {
