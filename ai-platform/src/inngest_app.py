@@ -5,7 +5,7 @@ from src.config import load_dotenv
 import time
 
 load_dotenv()
-is_dev = os.getenv("INNGEST_DEV", "1") == "1"
+is_dev = os.getenv("INNGEST_DEV", "0") == "1"
 
 inngest_client = inngest.Inngest(
     app_id="agent-orchestration",
