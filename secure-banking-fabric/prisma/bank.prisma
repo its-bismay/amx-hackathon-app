@@ -4,8 +4,9 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-py"
-  output   = "../src/generated/bank_client"
+  provider      = "prisma-client-py"
+  output        = "../src/generated/bank_client"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 model User {
