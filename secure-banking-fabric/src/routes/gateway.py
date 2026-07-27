@@ -312,8 +312,11 @@ async def _execute_governed_core_transfer(
         if not receiver_acc:
             return {"status": "FAILED", "reason": f"No registered beneficiary matching '{target_identifier}' found in bank records."}
 
-        if receiver_acc.id == sender_acc.id:
-            return {"status": "FAILED", "reason": f"Account {target_str} is your own account ({sender_acc.accountNo}). Please state a counterparty beneficiary account (e.g. Priya Verma: 10001002, Rahul Sharma: 10001003)."}
+        # Block self-transfers: compare by customerId, not just account ID.
+        # A customer may have multiple accounts (salary, savings, escrow); transferring
+        # to ANY of their own accounts — even a different one — is not a valid transfer.
+        if receiver_acc.customerId == sender_acc.customerId:
+            return {"status": "FAILED", "reason": f"Account {target_str} belongs to your own customer profile ({sender_acc.accountNo}). Self-transfers are not permitted. Please provide a valid beneficiary account."}
 
         # 3. Perform Atomic Debit & Credit
         new_sender_bal = sender_acc.balance - amount
