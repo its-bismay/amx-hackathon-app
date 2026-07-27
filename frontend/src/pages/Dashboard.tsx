@@ -28,6 +28,13 @@ export const Dashboard: React.FC = () => {
     setTheme((prev) => (prev === "corporate" ? "synthwave" : "corporate"));
   };
 
+  // Security guard: if user loses ADMIN role (or was never admin), kick them off the admin tab
+  useEffect(() => {
+    if (activeTab === "ADMIN" && user?.role !== "ADMIN") {
+      setActiveTab("OVERVIEW");
+    }
+  }, [activeTab, user?.role]);
+
   const handleSelectUserToSend = (accountNo: string) => {
     setSelectedRecipientAccountNo(accountNo);
     setActiveTab("SEND");

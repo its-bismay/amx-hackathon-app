@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bot, Send, ShieldCheck, KeyRound, Sparkles, Activity, CheckCircle2, Lock, ExternalLink } from "lucide-react";
+import { Bot, Send, ShieldCheck, KeyRound, Sparkles, Activity, CheckCircle2, Lock, ExternalLink, AlertTriangle, Wallet, TrendingDown } from "lucide-react";
 import { sendChatMessage } from "../api/aiPlatformClient";
 import { verifyOtpDirect } from "../api/sbfClient";
 import { useAuth } from "../context/AuthContext";
@@ -15,6 +15,7 @@ interface MessageItem {
   userMessage: string;
   assistantResponse: string;
   status: string;
+  code?: string;
   challengeId?: string;
   demoCode?: string;
   traces?: TraceStep[];
@@ -58,6 +59,7 @@ export const AgentTab: React.FC = () => {
         userMessage: textToSend,
         assistantResponse: res.assistantResponse || res.message,
         status: res.status || "APPROVED",
+        code: res.code,
         challengeId: res.challengeId,
         demoCode: res.demoCode,
         traces: res.traces || []
@@ -141,12 +143,45 @@ export const AgentTab: React.FC = () => {
                 <div className="chat-bubble chat-bubble-primary text-xs font-medium">{m.userMessage}</div>
               </div>
 
+              {/* Agent response bubble — use styled card for denials */}
+              {m.status === "DENIED" ? (
+                <div className={`ml-0 mt-1 p-3.5 rounded-xl border text-xs space-y-1.5 ${
+                  m.code === "INSUFFICIENT_FUNDS"
+                    ? "bg-warning/10 border-warning/40 text-warning-content"
+                    : "bg-error/10 border-error/40 text-error-content"
+                }`}>
+                  <div className={`flex items-center gap-2 font-bold text-sm ${
+                    m.code === "INSUFFICIENT_FUNDS" ? "text-warning" : "text-error"
+                  }`}>
+                    {m.code === "INSUFFICIENT_FUNDS" ? (
+                      <><Wallet className="w-4 h-4" /> Insufficient Balance</>
+                    ) : m.code === "AML_HIGH_VALUE_THRESHOLD_EXCEEDED" ? (
+                      <><AlertTriangle className="w-4 h-4" /> High-Value Transfer Blocked</>
+                    ) : (
+                      <><AlertTriangle className="w-4 h-4" /> Agent Request Denied</>
+                    )}
+                  </div>
+                  <p className="text-xs leading-relaxed whitespace-pre-wrap text-base-content/80">
+                    {m.assistantResponse}
+                  </p>
+                  {(m.code === "POLICY_DENIED" || m.code === "PER_TX_CAP_EXCEEDED") && (
+                    <div className="mt-2 p-2 bg-base-200 rounded-lg border border-base-300 text-[11px] text-base-content/70 font-mono">
+                      💡 Tip: AI Agent per-transaction limit is ₹25,000. Use{" "}
+                      <strong className="text-primary">Send Money (OTP)</strong> tab for larger transfers.
+                    </div>
+                  )}
+                  {m.code === "INSUFFICIENT_FUNDS" && (
+                    <div className="mt-2 p-2 bg-base-200 rounded-lg border border-base-300 text-[11px] text-base-content/70 font-mono">
+                      💡 Check your current balance in the{" "}
+                      <strong className="text-primary">Overview</strong> tab.
+                    </div>
+                  )}
+                </div>
+              ) : (
               <div className="chat chat-start">
                 <div
                   className={`chat-bubble text-xs ${
-                    m.status === "DENIED"
-                      ? "chat-bubble-error"
-                      : m.status === "OTP_REQUIRED"
+                    m.status === "OTP_REQUIRED"
                       ? "chat-bubble-warning"
                       : "bg-base-200 text-base-content"
                   }`}
@@ -154,6 +189,7 @@ export const AgentTab: React.FC = () => {
                   {m.assistantResponse}
                 </div>
               </div>
+              )}
 
               {/* Execution Traces Box */}
               {m.traces && m.traces.length > 0 && (

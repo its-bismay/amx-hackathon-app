@@ -207,17 +207,60 @@ async def run_agent_orchestration_chain(
     code = sbf_data.get("code")
 
     if status == "DENIED":
+        deny_code = sbf_data.get("code", "POLICY_DENIED")
+        deny_error = sbf_data.get("error", "Governance policy denied this operation.")
+
+        # Build a targeted, user-facing message based on the specific denial reason
+        if deny_code in ("PER_TX_CAP_EXCEEDED", "POLICY_DENIED") and "per-transaction cap" in deny_error:
+            per_tx_cap_val = 25000  # mirrors DEFAULT_POLICY
+            user_msg = (
+                f"🚫 Agent Limit Exceeded: The requested transfer of ₹{operation_payload['amount']:,.0f} "
+                f"exceeds the maximum per-transaction cap of ₹{per_tx_cap_val:,.0f} allowed for AI Agent operations.\n\n"
+                f"To move larger amounts, please use the Send Money tab (OTP-secured direct transfer) "
+                f"where higher limits apply."
+            )
+            trace_detail = f"DENIED: Per-tx cap ₹{per_tx_cap_val:,.0f} | Requested ₹{operation_payload['amount']:,.0f}"
+        elif deny_code == "AML_HIGH_VALUE_THRESHOLD_EXCEEDED":
+            user_msg = (
+                f"🚫 High-Value Transfer Blocked: ₹{operation_payload['amount']:,.0f} exceeds the AML "
+                f"manager-approval threshold. AI Agents cannot authorize transfers above ₹50,000.\n\n"
+                f"Please contact your relationship manager or use the standard banking channel."
+            )
+            trace_detail = f"DENIED: AML threshold breach — ₹{operation_payload['amount']:,.0f} > ₹50,000"
+        elif deny_code == "INSUFFICIENT_FUNDS":
+            user_msg = (
+                f"💸 Insufficient Balance: Your account does not have enough funds to complete this transfer.\n\n"
+                f"{deny_error}\n\n"
+                f"Please check your balance on the Overview tab and try a lower amount."
+            )
+            trace_detail = f"DENIED: {deny_error}"
+        elif deny_code == "VELOCITY_LIMIT_EXCEEDED":
+            user_msg = (
+                f"⏱️ Rate Limit Hit: Too many agent requests in a short window. "
+                f"Please wait 60 seconds before retrying."
+            )
+            trace_detail = f"DENIED: Velocity limit — {deny_error}"
+        elif deny_code in ("FLEET_WIDE_KILL_SWITCH_ACTIVE", "AGENT_TYPE_DISABLED", "INSTANCE_REVOKED"):
+            user_msg = (
+                f"🛑 Agent Disabled: {deny_error}. "
+                f"Re-enable agent controls in the Admin → Security & Admin panel."
+            )
+            trace_detail = f"DENIED: Kill switch — {deny_code}"
+        else:
+            user_msg = f"🛑 Request Blocked: {deny_error}"
+            trace_detail = f"DENIED: {deny_code} — {deny_error}"
+
         traces.append({
             "step": "Governance Decision",
             "agent": "SBF Governance Pipeline",
-            "detail": f"REJECTED: {sbf_data.get('error')}"
+            "detail": trace_detail
         })
         return {
             "id": f"msg_{uuid.uuid4().hex[:8]}",
             "userMessage": prompt,
-            "assistantResponse": f"Governance Policy Denied: {sbf_data.get('error')}",
+            "assistantResponse": user_msg,
             "status": "DENIED",
-            "code": code,
+            "code": deny_code,
             "traces": traces
         }
 

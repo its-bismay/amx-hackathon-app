@@ -138,12 +138,19 @@ async def process_agent_request(
         )
 
         if exec_res.get("status") == "FAILED":
+            # Distinguish between insufficient funds and other execution failures
+            # so the frontend / orchestrator can show targeted error messages.
+            fail_reason = exec_res.get("reason", "Transfer execution failed in core banking")
+            if "Insufficient funds" in fail_reason or "insufficient" in fail_reason.lower():
+                fail_code = "INSUFFICIENT_FUNDS"
+            else:
+                fail_code = "EXECUTION_FAILED"
             return {
                 "status": "DENIED",
-                "code": "EXECUTION_FAILED",
+                "code": fail_code,
                 "requestId": request_id,
                 "traceId": trace_id,
-                "error": exec_res.get("reason", "Transfer execution failed in core banking")
+                "error": fail_reason
             }
 
         return {
